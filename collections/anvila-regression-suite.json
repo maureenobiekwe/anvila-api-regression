@@ -1,0 +1,1027 @@
+{
+  "info": {
+    "_postman_id": "d40a93e8-b0a2-453f-af90-5bff3b02d42e",
+    "name": "Anvila Regression Suite",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55202040",
+    "_collection_link": "https://go.postman.co/collection/55202040-d40a93e8-b0a2-453f-af90-5bff3b02d42e?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Flow 1 — Auth Chain",
+      "item": [
+        {
+          "name": "Request 1.1: Register New User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 201 Created\", function () {\r",
+                  "    pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 5 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has success field\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body).to.have.property(\"success\");\r",
+                  "    pm.expect(body.success).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has user data with id and email\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body).to.have.property(\"data\");\r",
+                  "    pm.expect(body.data).to.have.property(\"id\");\r",
+                  "    pm.expect(body.data).to.have.property(\"email\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Account is unverified by default\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body.data.email_verified).to.eql(false);\r",
+                  "});\r",
+                  "\r",
+                  "// Save registered email for next requests\r",
+                  "if (pm.response.code === 201) {\r",
+                  "    var email = pm.response.json().data.email;\r",
+                  "    pm.collectionVariables.set(\"registered_email\", email);\r",
+                  "    console.log(\"Saved registered email: \" + email);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"display_name\": \"Regression Test {{$timestamp}}\",\r\n    \"email\": \"regtest{{$timestamp}}@testmail.com\",\r\n    \"password\": \"Password123!\",\r\n    \"confirmPassword\": \"Password123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Login Unverified Account — Expect 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Unverified account must return 403 Forbidden\", function () {\r",
+                  "    pm.response.to.have.status(403);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 3 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message mentions verification\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    var text = JSON.stringify(body).toLowerCase();\r",
+                  "    pm.expect(text).to.include(\"verif\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"{{registered_email}}\",\r\n    \"password\": \"Password123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Login Verified Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 5 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has success field set to true\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body).to.have.property(\"success\");\r",
+                  "    pm.expect(body.success).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has user object with required fields\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body).to.have.property(\"data\");\r",
+                  "    pm.expect(body.data).to.have.property(\"user\");\r",
+                  "    pm.expect(body.data.user).to.have.property(\"id\");\r",
+                  "    pm.expect(body.data.user).to.have.property(\"email\");\r",
+                  "    pm.expect(body.data.user).to.have.property(\"display_name\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has tokens object with access and refresh\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body.data).to.have.property(\"tokens\");\r",
+                  "    pm.expect(body.data.tokens).to.have.property(\"access_token\");\r",
+                  "    pm.expect(body.data.tokens).to.have.property(\"refresh_token\");\r",
+                  "    pm.expect(body.data.tokens.access_token).to.be.a(\"string\");\r",
+                  "    pm.expect(body.data.tokens.refresh_token).to.be.a(\"string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Access token starts with eyJ (valid JWT format)\", function () {\r",
+                  "    var token = pm.response.json().data.tokens.access_token;\r",
+                  "    pm.expect(token.substring(0, 3)).to.eql(\"eyJ\");\r",
+                  "});\r",
+                  "\r",
+                  "// Save tokens for all subsequent requests\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    var tokens = pm.response.json().data.tokens;\r",
+                  "    pm.collectionVariables.set(\"auth_token\", tokens.access_token);\r",
+                  "    pm.collectionVariables.set(\"refresh_token\", tokens.refresh_token);\r",
+                  "    console.log(\"Auth token saved: \" + tokens.access_token.substring(0, 20) + \"...\");\r",
+                  "    console.log(\"Refresh token saved\");\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"{{test_email}}\",\r\n    \"password\": \"{{test_password}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Protected Endpoint — Valid Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 200 — session is active\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 3 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response is not 401 — token is valid\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(401);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/explore?page=1&size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "explore"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Protected Endpoint — Tampered Token Must Be Rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Tampered token must return 401 Unauthorized\", function () {\r",
+                  "    pm.response.to.have.status(401);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 3 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response indicates authentication failure\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body.success).to.not.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}xxx_tampered",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/explore?page=1&size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "explore"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Flow 2 — Agent Generation Chain",
+      "item": [
+        {
+          "name": "2.1 Fresh Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 200\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 5 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);\r",
+                  "});\r",
+                  "\r",
+                  "// Save fresh token for generation\r",
+                  "if (pm.response.code === 200) {\r",
+                  "    var token = pm.response.json().data.tokens.access_token;\r",
+                  "    pm.collectionVariables.set(\"auth_token\", token);\r",
+                  "    console.log(\"Fresh token saved for generation flow\");\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"{{test_email}}\",\r\n    \"password\": \"{{test_password}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Generate Agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 202 Accepted\", function () {\r",
+                  "    pm.response.to.have.status(202);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 30 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(30000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has success field\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body).to.have.property(\"success\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has data with id or session identifier\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body).to.have.property(\"data\");\r",
+                  "});\r",
+                  "\r",
+                  "// Save session/persona ID for preview request\r",
+                  "if (pm.response.code === 202) {\r",
+                  "    var data = pm.response.json().data;\r",
+                  "    var id = data.id || data.session_id || data.persona_id;\r",
+                  "    if (id) {\r",
+                  "        pm.collectionVariables.set(\"session_id\", id);\r",
+                  "        console.log(\"Session ID saved: \" + id);\r",
+                  "    } else {\r",
+                  "        console.log(\"Response data: \" + JSON.stringify(data).substring(0, 200));\r",
+                  "        console.log(\"Could not find session ID — check response structure\");\r",
+                  "    }\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "prompt",
+                  "value": "A QA automation testing agent that writes test scripts",
+                  "type": "text",
+                  "uuid": "f0e42d98-9447-4aa0-b77a-ad241c9f4669"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/personas/generate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.3: Preview Generated Agent",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "pm.test(\"Response is valid JSON\", function () {\r\n    pm.response.to.be.json;\r\n});\r\n\r\npm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Response time is under 10 seconds\", function () {\r\n    pm.expect(pm.response.responseTime).to.be.below(10000);\r\n});\r\n\r\npm.test(\"Response has data\", function () {\r\n    var body = pm.response.json();\r\n    pm.expect(body).to.have.property(\"data\");\r\n});\r\n\r\nconsole.log(\"Preview response: \" + pm.response.text().substring(0, 300));",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/personas/{{persona_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "personas",
+                "{{persona_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Flow 3 — Explore & Public Access",
+      "item": [
+        {
+          "name": "3.1 Explore Page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Status code is 200 — public endpoint works without auth\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 3 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has data property\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body).to.have.property(\"data\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response has success field set to true\", function () {\r",
+                  "    var body = pm.response.json();\r",
+                  "    pm.expect(body.success).to.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/explore?page=1&size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "explore"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Explore — Invalid Page Parameter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 3 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Invalid page parameter is handled gracefully — not 500\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "    pm.expect(pm.response.code).to.not.eql(503);\r",
+                  "});\r",
+                  "\r",
+                  "console.log(\"Invalid pagination status: \" + pm.response.code);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/explore?page=-1&size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "explore"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "-1"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Flow 4 — Negative & Security Regression",
+      "item": [
+        {
+          "name": "4.1 Register Duplicate Email — Expect 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Duplicate email must return 409 Conflict\", function () {\r",
+                  "    pm.response.to.have.status(409);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 3 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message does not reveal account status\", function () {\r",
+                  "    var text = JSON.stringify(pm.response.json()).toLowerCase();\r",
+                  "    pm.expect(text).to.not.include(\"verified\");\r",
+                  "    pm.expect(text).to.not.include(\"active\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"display_name\": \"Duplicate Test\",\r\n    \"email\": \"{{test_email}}\",\r\n    \"password\": \"Password123!\",\r\n    \"confirmPassword\": \"Password123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Login Wrong Password — Expect 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Wrong password must return 401 Unauthorized\", function () {\r",
+                  "    pm.response.to.have.status(401);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 3 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Error message is generic — no field-level hints\", function () {\r",
+                  "    var text = JSON.stringify(pm.response.json()).toLowerCase();\r",
+                  "    pm.expect(text).to.not.include(\"password is wrong\");\r",
+                  "    pm.expect(text).to.not.include(\"incorrect password\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"{{test_email}}\",\r\n    \"password\": \"CompletelyWrongPassword999!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.3: Register With XSS In Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 5 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"XSS payload must be rejected with 400\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Server did not crash — not 500 or 503\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "    pm.expect(pm.response.code).to.not.eql(503);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"display_name\": \"<script>alert('xss')</script>\",\r\n    \"email\": \"xss{{$timestamp}}@testmail.com\",\r\n    \"password\": \"Password123!\",\r\n    \"confirmPassword\": \"Password123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 Register Oversized Name — Must Reject Not Crash",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response is valid JSON\", function () {\r",
+                  "    pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response time is under 10 seconds\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(10000);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Oversized payload must return 400 — not crash the server\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Server did not crash — not 500 or 503\", function () {\r",
+                  "    pm.expect(pm.response.code).to.not.eql(500);\r",
+                  "    pm.expect(pm.response.code).to.not.eql(503);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"display_name\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\r\n    \"email\": \"overflow{{$timestamp}}@testmail.com\",\r\n    \"password\": \"Password123!\",\r\n    \"confirmPassword\": \"Password123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "// This runs before EVERY request in the collection\r",
+          "console.log(\"Starting request: \" + pm.info.requestName);\r",
+          "\r",
+          "// Make sure base_url is set (fallback)\r",
+          "if (!pm.collectionVariables.get(\"base_url\")) {\r",
+          "    pm.collectionVariables.set(\"base_url\", \"https://api.staging.anvila.hng14.com\");\r",
+          "}\r",
+          "\r",
+          "// Generate a unique email for registration (optional)\r",
+          "let timestamp = Date.now();\r",
+          "pm.collectionVariables.set(\"dynamic_email\", `regtest${timestamp}@testmail.com`);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.staging.anvila.hng14.com"
+    },
+    {
+      "key": "auth_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "registered_email",
+      "value": ""
+    },
+    {
+      "key": "session_id",
+      "value": ""
+    },
+    {
+      "key": "test_email",
+      "value": "ugoamara409@gmail.com"
+    },
+    {
+      "key": "test_password",
+      "value": "2fwbY3H5TwAPzkX"
+    },
+    {
+      "key": "persona_id",
+      "value": ""
+    }
+  ]
+}
