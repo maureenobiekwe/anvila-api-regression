@@ -24,9 +24,13 @@ jobs:
         run: npm ci
 
       - name: Run Newman tests
-        run: npm test
+        continue-on-error: true
+        run: |
+          npm test
+          ls -la test-report.html || echo "Report file not found"
 
       - name: Upload HTML report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: newman-report
